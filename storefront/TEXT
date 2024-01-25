@@ -1,0 +1,4 @@
+Collection -> Product
+Customer -> Order
+Order -> Item
+Cart Item

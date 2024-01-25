@@ -1,0 +1,1039 @@
+upto: getting the orders
+
+-we use angle brackets to define a parameter <param>
+-name your templates based on their view function ie: detail()=detail.html
+-'app_name' is known variable that django recognizes
+-in the world of API's we refer to our models as resources
+-REST stands for representational state transfer
+-url stands for uniform resource locator
+-heroku: when we run heroku create x3 things happen. 1. heroku creates this app at this default address in the cloud. 2. It creates a Git repository at this address 3. It tells our current local git repository in this folder about this new remote git repository
+-APP DESIGN: not too big (monolith) where the app gets bloated and hard to maintain and use. But not too fine grained where we end up with a lot of coupling(dependency) between them. You want an app to do one thing and do it well, ie: each app has high cohesion and contains related parts
+-ENTITY: seperate parts of an app  
+-when concepts are highly related they should be bundled together when it comes to app design
+-a good design is one with minimal coupling and high cohesion(focus). Each app is focused on a specific piece of functionality
+-everytime we create a new app we should include it in the list of installed apps
+-always use decimal field for monetary values when creating model classes
+-to make something nullable make null=True
+-use uppercase letters to indicate fixed list of values or constants
+-primary keys don't allow duplicate values
+-dont have to define reverse relationship for 1 - 1 models in models.py django will automatically do that for use to save us time
+-try to define parent classes before child classes to reference the parent classes in the child classes. When this is not possible use a string
+-auto_now_add=True when django sees this it will automatically populate the field when we create a new cart 
+-1 to many, many to many and many to 1 relationships. If you define the relationship in one class django will automatically create the reverse relationship
+-circular dependency happens when x2 classes depend on each other at the same time
+-related_name='+' when including the plus sign here this tells django not to create the reverse relationship
+-in django templates we have x2 special notations. one is double curly braces for rending a value and the other is curly brace followed by a % to exec some logic like loops or conditional statements
+-for your view function in the views module (index(request)) try to use descriptive names for your template file, generic names like index.html can prove troublesome as django looks through all the apps for this name and could render this from another app. So use name spaces
+-similar to above use names spaces for your templates and prefix your template name with the namespace when referencing the template in the view function
+-using visual studio folder for python interpreter
+
+
+-a resource on the internet can be a web-page, image, video, pdf etc
+-having the server only return the data and letting instead the client generate the html for a page, free's up the server to serve more clients, its more scaleable and performant
+-http defines how clients and servers communicate. Client sends a request and server provides a response. Its a request response protocall
+-APIs are like buttons on a remote, they are an interface that we use to interact with a TV
+-pipenv is a dependency management tool for installing our app dependencies in virtual environments, this way our app dependencies will not clash with other app dependancies. 
+Different apps may require different versions of the same packages, by having a seperate environment we don't clash or run different versions for other apps
+-we need to use the python interreptter (python instance) that is installed in our virtual env not globally on our machine for that we run pipenv shell
+-init file defines the directory as a package
+-pip is the python package manager
+-pipfile outlines dependencies, packages, scripts and their version required for the application
+-migrations folder generates db tables
+-admin module defines how the admin interface for this app is going to look like
+-apps module is where we configure this app (should be called config.py)
+-we use model classes to pull out data from the database and present to the user
+-test module is where we write our unit tests
+-views module is the request handler where we write our logic to process an incoming request and return a response to the client
+-once we set the url configurations in our app then we need to import that url module to the main url configuration module of the project
+-we always end our routes with a forward slash when configuring urls in the url modules
+-whenever we change our code django webserver automatically restarts itself
+-we must map urls to view functions to handle requests at specific endpoints from the client
+-press ctrl p to bring up the search box
+-press ctrl b to hide the sidebar
+-models are used to store and retrieve data
+
+-django model relationships can be one to one, one to many or many to many (there is no many to one its just one to many with the classes reversed)
+-we use models.ForeignKey for one to many. The one side is inside parethesis and many is the class it belongs in ie: here in the comment class - this line 
+event = models.ForeignKey(Event, on_delete=models.CASCADE) - the event instance is the one and the comment instance is the many so we can have many comments associated with the one event.
+-django automatically stores the reverse relationship for Foreign Keys we can access by combining the name of the related model with the suffix _set
+-we have relationships between our django models so we can start from one end and nagivate to the other end ie: product entity and category entity
+-sometimes the relationship between models can have attributes, those attributes are part of an association class. ie: product -> cart this relationship can have the attribute of quantity (how many instances of the product is in the cart)
+this attribute can be part of an association class of 'CartItem'. This association class can represent the relationship between the models of product and cart
+
+- 1 to 1: models.OneToOneField()
+- 1 to many: models.ForeignKey()
+- many to many: models.ManyToManyField()
+
+-entities: 
+product - title, description, price, inventory
+collection - title, featured product, product
+orders - customer, cart, date
+customer - name, email,
+cart - product, created_at
+
+-don't use a monolith design between apps as its hard to maintain and reuse
+-dont use too many single apps as there is too much coupling or dependency
+-bundle together highly related apps to reduce dependency and make your apps self contained so they are modular and be dropped into other projects. A good design has minimal coupling and high cohesion (highly related apps together).
+
+-use models.foreignKey for one to many relationship. Don't use primary_key=True as this enforces unique values and for one to many we don;t want this as we want to have duplicate records, keep on_delete' arg
+-use models.OneToOneField for one to one relationship (address to customer, as we want only one customer to have one address and one address to one customer) and add primary_key=True as arg otherwise it will be one to many, 
+primary key does not allow duplicate values and enforces unique values so customer can one and only one address.
+-when we set on_delete in a model that means deleting the model passed as the first argument what should happen to its child, ie: in the address table: customer = models.ForeignKey(Customer, on_delete=models.CASCADE) here we are saying when you delete a customer you should cascade it and delete the customers address record too.
+-a queryset is a dictionary of objects
+-onetomany / foriegn key queries: we use the _set postfix after the related model in lower case to access the reverse relationship in a queryset for a onetomany relationship (foreignkey) ie: customer1 = Customer.objects.get(id=2) - orders = customer1.order_set.all(). If you dont like the name of the reverse relation (in this case 'order_set') then we can pass a 'related_name' parameter when defining the ForiegnKey ie: customer = models.ForeignKey(Customer, on_delete=models.CASCADE, related_name='orders') now we can access the reverse relationship with customer1.orders.all() instead of customer1.order_set.all()
+-we can do the reverse of the above, when we reference a foreign key field, we can then access the attributes of that Foreign key class ie: order = Order.objects.first() - print(order.customer.name) - so here in the order object we reference the customer field.. now we are in the customer class and can reference any fields there in this case name and we return the name for the customer who placed the order object in question
+-the parent model is the model where the foreign key references ie: customer = models.ForeignKey(Customer, null=True, on_delete=models.SET_NULL) this field is inside the Orders model so Customer is the parent and Orders is the child - this is because the model that defines the foreign key (Orders) is establishing a relatioship with another model (Customer) and the model being referred to is considered the parent.
+-we can chain arguments to the filter method when performing queries ie: products = Product.objects.filter(category="Out Door", name="Ball") 
+-parameters are for defining functions while arguments are for calling functions
+-manytomany relatioship queries: we use filter and the field name followed by __ (double underscore) and the field in the related table we want to access ie:  products = Product.objects.filter(tags__name) - here tags is the manytomany field in the Product table then by using double underscore we jump to the tags table and access the name field
+-manytomany relationships have an intermediatory table (which stores the id reference of both tables in the relationship), while manytoone relationships dont. Use models.ForeignKey for manytoone and models.ManyToManyField for manytomany
+**
+-in django model queries the double underscore notation allows you to jump into the related table to use those fields ie: ballOrders = firstCustomer.order_set.filter(product__name="Ball").count()
+-when doing models.ForeignKey, the one is the class you pass inside parethesis (parent) and the many is the class its defined in ie: customer = models.ForeignKey(Customer, null=True, on_delete=models.SET_NULL) in the Orders class. Here the Customer class is the parent and is one and Orders is many
+-blank=True determins if a field is allowed to be left empty in a form
+-If you have a circular relationship, then pass the class name within quotes, but be careful if you rename the class because the string will not be updated.
+-If you pass a '+' as the related_name kw arg that tells django not to create that reverse relationship. So here in the Collection class: featured_product = models.ForeignKey('Product', on_delete=models.SET_NULL, null=True, 
+related_name='+') this will not create the reverse relationship in the Product class with field name 'collection_set' or 'collection' as there is sometimes confusion about the naming of the related name in django
+
+-a db relationship has two ends: A parent and a child, the parent should exist before we can store the child
+
+-we use ORMs to query and manipulate data from a db. Tt saves us time instead of writing raw sql queries by hand
+-ORMs or Object Relational Mapper - like the name suggests maps records in a relational db to objects that we can use in our code to manipulate data.
+-ORMs dont perform well when dealing with complex queries
+-the best code is no code - don't over engineer
+-premature optimisation is the root of all evils
+
+
+-Product.objects - the objects attribute in a model class returns a manager object which we can use an interface to the db. The manager has a bunch of methods for querying or update data like all(), get() etc
+-most of the methods within the manager object return a queryset, not a list of of products like the above example.
+-a queryset is an object that encapsulates a query. At some point django evalutes the query_set and sends the right sql statements to the db. This happens when we interate over a qs, access an individual element with square brackets
+/ slice it like queryset[0:5] or convert it to a list. Because of this we say querysets are lazy or evaluated at a later point. Query sets are done for performance and effieceny purposes. We don't want 1000s of queries being regualy
+sent to db and having only some store in memory and the rest being thrown out, this is a waste of resources.
+-not all methods of the manager object return a queryset, ie: count() instead returns a result immediately, which is the number of records in the table, also get() returns a single object not a qs
+-when mosh refers to objects, he is referring to class instances
+-magic numbers are values in the code that dont have an explanation or clear context
+-you can postfix your field name argument with two underscores and a lookup type when using filter method. ie: .filter(unit_price__gt=20)
+-you can combine two conditions using OR by using Q objects. ie: # Products: inventory < 10 OR price < 20. Q stands for Query and you can use a Q object to create a query expression like Q(unit_price=10). Use Q objects to construct
+complex queries by combining multiple conditions with logical operators (AND, OR). Prefix the Q object with ~ for NOT operator as an expression inverter. ie: ~Q(unit_price__lt=20) for a unit price not less than 20.
+-in the django toolbar inside the SQL tab: the first two sql queries are queries that django needs to do its job, the third one is the query generated from our ORM.
+-Both inventory__lt=10 and Q(inventory__lt=10) are query expressions in Django
+-In OOP a constructor is a special method or function within a class that is used to initialize the objects state when it is created allowing you to set initial values for its attributes based on the the provided arguments: 
+# Define the constructor within the Car class
+class Car:
+    def __init__(self, make, model, year):
+        self.make = make
+        self.model = model
+        self.year = year
+
+# Creating an instance of the Car class by providing arguments to the constructor
+my_car = Car("Toyota", "Camry", 2022)
+
+# Accessing the attributes of the created object
+print(my_car.make)   # Output: Toyota
+print(my_car.model)  # Output: Camry
+print(my_car.year)   # Output: 2022
+	
+
+-Use F objects when we want to compare two fields. ie: queryset = Product.objects.filter(inventory=F('unit_price')) here we are saying filter all the products where their inventory equals their unit price. use the F class when we want
+to refernce a particualr field thats why its called F. We can also reference a field in a related table with F objects ie: queryset = Product.objects.filter(inventory=F('collection__id'))
+
+-querysets are lazy when means they are evaluated a later point
+-use Q objects when you want to return complex queryset using OR operator. ie: inventory < 10 OR price < 20. If you want to use AND just pass multiple keyword args to the filter method
+-be careful with only() and defer() methods of the objects attribute of the model class. Because if your not careful and dont know what you are doing you could be generating lots of extra unessesary queries
+-use select_related() to preload a related table ie: django will only query the product table in Product.objects.all() and takes longer to query the related tables but you get better performance by preloading related tables. When we use the select_related() method django creates a join between our tables
+-use select_related() when the other end of the relationship has one instance (ie: one product has one collection) use prefetch_related when the other end of the relationship has many objects
+-_set will be appended to the target class when django creates a name for the inverse relationship for the ORM. ie: OrderItem class(table) has a orders field which is foriegnkey to the Orders class(table) but the Orders class (table) does not have an orderitem field, 
+the relationship is created automatically by django with the name of the of the target class appnded with _set, so in this case orderitem_set, this is the name of the relationship. Note the naming for the new name with set is all lowercase, while the class maybe camelcase
+-use the annotate() function to give a new field to your returned SQL query
+-use F objects for referecing fields inside models: from django.db.models import F - you can refernce fields from the current table or another table
+-django will automatically create the reverse relationship when you define a foreignkey, manytomany or onetoone field, this is named the lower case name of the target class name with _set appended to it
+-for monetory values we should always use a DecimalField as FloatField can have some rounding issues
+
+
+-use the values method of the manager object to query only certain fields or columns; ie: queryset = Product.objects.values('id', 'title'). Using the double underscore notation we can access the related fields. 
+ie: values('id', 'title', 'collection__title')
+-be careful using the only() method of the manager object as it may send a bunch of extra queries to the db if your not careful. only() is used to select fields from a table like the values() method although this method returns
+dictionary objects and does not have this behaviour of issuing extra queries to the db when a field does not exist.
+-defer() is the opposite of the only() method. With this method we can defer the loading of certain fields to later. ie: queryset = Product.objects.defer('description') - here we are saying we are interested in all fields in the product 
+table except for the description field so we can defer the loading of this to later.
+-in this method call queryset = Product.objects.all() django is only going to query the Products table not any related tables, so if you reference a related table to the Products table in your code, then your app is going to hang because
+django has to send a bunch of extra queries one by one to accomodate the related objects and the related table.
+-to use the related tables in our code we have to preload the field that references it. ie: queryset = Product.objects.select_related('collection').all() - here we are referencing the collection field which has the reference to the
+related table via forign key which we used in our many to one relationship.
+-when we use the select_related() method django creates a join between our tables
+-use the 'related_name=' argument to give the reverse relationhip between tables a custom name, that you can easily refernce in your code. If you don;t supply the related_name argument django will name the field in the other class the 
+name of the table referencing the foreign key and append _set. ie: order = models.ForeignKey(Order, on_delete=models.PROTECT, related_name='items') this field exists in the OrderItem class. Here there will be a field in the Order class 
+called items, if related_name is not set then the name in the Order class will be orderitem_set (name of class exporting all lowercase with _set appended to end) because the foreign key exisits in the OrderItem class.
+-postfix two underscores and the field name to a table to preload that field ie: select_related('collection__featured_product') 
+-we use select_related when the other end of the relationship has one instance. Like a product has only one collection. But we use prefetch_related when the other end of the relationship has many objects (n) like the promotion of a 
+product. A product can have only one collection but can have many promotions. To pre-load these promotions we use the prefetch method. These methods can be used togther with chaining.
+-view functions take a request and returns a reponse
+
+-use the aggregate method to compute values in your queries. You need to import the classes you will use to compute at the top such as Count and create an instance of these classes in your code passing the field you want to compute. 
+ie: result = Product.objects.aggregate(count=Count('id')) - aggregate will return a dictionary object and is a method of queryset objects so can be used whenever we have a queryset.
+
+-we can use the annotate method of the manager object to add an additional attribute or create a new field for the model class we are querying. ie: queryset = Customer.objects.annotate(is_new=Value(True)) - this will create a new
+field called is_new in the customer table and set its value to 1 which is the numeric equivilent of boolean true. Each customer object now has this extra attribute or field.  
+
+-use Func() object to call db functions that are unique to the db you are using. For django database functions that are common accross all db engines google django database functions and  import like: 
+from django.db.models.functions import Concat
+
+-use the sel button in teh django toolbar to run the actual sql against the db
+
+-for monetry values we should always use decimal fields, float fields have rounding issues that may impact accuracy
+
+-use an expression wrapper object when you need to wrap complex expressions like a computed column
+ie: discounted_price = ExpressionWrapper(F('unit_price') * 0.8, output_field=DecimalField())
+    queryset = Product.objects.annotate(discounted_price=discounted_price)
+
+-use preloading to avoid extra queries to the database where you are referencing a related table.
+-use backslash to tell python interreptor we are contining our code on the next line
+
+
+-when creating objects for insertion into the database, its better to set the objects fields one by one, setting the objects fields through keyword args does not let you rename the fields and doesn't have intellisense.
+
+-circular dependency happens when two classes depend on each other at the same time. You can solve by passing a string as the reference to the class model but this wont be updated if we change our model tomorrow
+-content type is an abstract model that represents a generic model relationship. That is where you dont have to define concrete models to avoid dependencies between apps.
+-content type is a model that represent the type of an object in our application
+
+
+-reading data from the disk is always slower operation than reading it from the memory
+-the second time django evaluates an entire query set, like converting the queryset to a list. It reads it from the cache not retrieves from the database  ie: list(queryset) and list(queryset). The second one is read from the cache 
+as its already been evaluated the first time. This is called the queryset cache.
+-caching only happens if we evalute the entire queryset first so caching happens in this order: list(queryset), queryset[0] but not in this order queryset[0], list(queryset)  
+-you want to evalute a queryset first before reading its objects as it will be in the queryset cache. If you read then evaluate a queryset then you will end up with two queries to the db which can affect performance so structure your
+querysets properly
+
+
+-in relational databases parent records should exist before we create the child record
+-keyword arguments in other parts of our code don't get updated if we use f2 to rename a field in a model class 
+-avoid creating objects in the constructer or using the create method as the keyword args don't update when you rename the fields and we also dont get intellisense
+-to properly update an object in django applications, first we have to read it from the database so we have all the values in memory, ie: collection = Collection.objects.get(pk=11) then set all its fields on
+the object like collection.featured_product = None
+-atomic means all changes should be executed together, if one change fails all changes should be rolled back. This is where we use a transaction, we wrap the code we want to be exec together
+-always create parent records first before creating child records, this is how relational dbs work
+-use Product.objects.raw() to exec raw sql queries, only use raw sql queries when dealing with complex queries
+
+-serializer converts a model instance (like a product object) to a python dictionary
+-serializing objects turns a model object into a json object which can be rendered by the API
+-rest stands for representational state transfer which is a set of rules and conventions governing APIs
+-restful APIs use HTTP request methods such as POST(create), GET(read), PUT(update) and DELETE(delete) or CRUD to perform operations on data and return the data in standard format such as JSON or XML
+-3 important concepts of restful APIs are resources, representations and http methods.
+-resources are an object or piece of data which is made available to the client through a url endpoint. ie: like a product object which has fields such as price, title, description etc
+-shift ctrl + o to see all the symbols in a module
+-when you see the self keyword, its a reference to the current object
+
+
+-how to start the mysql server: 
+1. Open 'Run' Window by using Win key + R.
+2. Type 'services.msc'
+3. Now search for MySQL service based on the version that is installed.
+4. Click on 'stop', 'start' or 'restart' the service option.
+-our api fields can have different fields to our model class and vice versa
+-there are four ways to serialize relationships: primary key, string, nested object and hyperlink
+-use model serializers to not repeat yourself defining fields and their validation rules in both the model and serializer classes
+-order matters when defining your serializer classes
+-use the post method to deserialize objects as they come from the client in json form and we want to turn this into a model object ans save it in the database
+-if you set null to true in the model class then the field is optional in the database
+-manytomany field is optional because if we dont supply a value it will be set to an empty list
+-you can pass an array of http methods as strings to your api_view decorator in your view functions to enable different functionality such as create or update a product pbject
+-PUT method updates all properties while PATCH updates a subset of them. Use POST to create a new object and GET to retrieve an exisiting object
+-when your endpoint creates a new resource it should return a status of 201
+
+
+
+*-class based views make our code cleaner and more consciese plus they provide more reuse opportunities
+-mixins provide code reuse and they are used to be inherited by other classes not instantiate objects like regualr classes. Mixins are a class that encapsulates some pattern of code. 
+-in DRF we have various mixins to provide differnt kinds of operations on a resource
+-A generic view is a concrete class that combines one or more mixins and provides handler methods like get, post, put and delete
+-using viewsets we can combine the logic for multiple related views inside a single class. ie: if we have ProductList class for listing and creating products and ProductDetail class for getting single instances, updating and deleting products we can combine both therse classes inside a single class. It called a viewset because its a set of related views.
+-with viewsets we can perform multiple operations on a resource like list, create, update destroy etc
+-we can use a router to create the routes for a viewset
+-we use a context object to provide additional data to a serializer. ie: we can use one to pass url params to the serializer
+
+-when we build an api, 3 steps: create serializer, create view then create route
+
+-concrete classes that combine one or more mixins are called generic views
+-if you see self in the code this is a reference to the current object
+-using viewsets we can combine the logic for multiple related views inside a single class. Its called a viewset because its a set of related views
+-routers take care of generating url patterns for us when we register our viewset with the router
+-when you see super() this is a refernce to the base class
+-if you set a related name in models.ForeignKey then the target class will have a new attribute with the name you specified there: ie: product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='reviews') - now the Product
+class has a new attribute 'reviews'
+-when you install a package the name of the library can be different to the name of the app, be careful of this when adding to installed_apps array. The name of the app is how you import into your file but the name of the library is
+used when you do your pipenv install in the terminal
+-django-filters are a seperate library you can install to filter, search and sort your apis
+-GUID: globally unique identifer is a long 32 character string to help with security in our urls. We do this by converting our id field to a GUID so the id in the url is scrambled and no hacker can easily guess our cart id and mess with this cart.
+-using a unique constarint we can make sure there are no duplicate records in a model, you can do this with a meta class with a unique_together attribute. We have to do this for the product field in the CartItem class.
+-put updates an entire object while patch updates a subset of an object
+-whenever we want to build an api we build a serializer, view then a route
+-you can get intellisense in vscode by annotating an object, ie: instead of 'cart_item' do 'cart_item: CartItem'
+-use the SerializerMethodField() class when we want to include a calculated field in our serializer
+-eager loading will retrieve related objects from the database along with the main object in a single query. It can reduce the amount of queries sent to the db and help performance\
+-adding or removing mixins from your ViewSet class in views.py will determine the operations that your endpoints can perform so operations like get, post, delete etc
+-product_id field is generated dynamically at runtime, its not a field we can reference in our serializer, so we have to explicitly define this field
+-In the serializer we dont have access to url parameters. Instead we get this from the view and using a context object pass it to the serializer
+
+
+
+-middleware is a function that takes a request and passes that request to the next middleware or returns a response. When django receives a request it passes it to a view, during that time it runs that request through these middleware functions in order. Each function can take a request and add something to it, or it can return a response. If it returns a response, the next middleware function is not exec and the req/res cycle is terminated.
+-two ways to customize the user model in django: 1. extend the user model using inheritence - for storing or changing attributes related to authentication (add data to user table). 2. create a profile using composition - for storing non-auth related attributes (new table). With the last approach we allow each app to have a different concept of a users profile so we usually use this approach.
+- as a best practice you should always create a custom user model at the beginning of your project as its difficult to change the user model halfway through the project because of dependencies. just define the class and pass in models.py this will ensure that later on if we want to replace this class we are not going to have any problems. Do this even if there is no requirement to change the authentication flow in the future.
+-careful of dependenceies when creating reusable apps (like model dependencies)
+-a group is a collection of permissions
+-its a better practice to inherit everything in the baseclass first then override specific parts
+-token based authentication is the de facto standard for authenticating users with restful APIs
+-our software components should have a single responsibility. Seperation of responsibility between sw components will reduce interdependency and help avoid spagetti code - making it easier to maintain
+-every endpoint should have only one responsibility
+-the ModelViewSet class provides all operations ie: get, post, patch, put and delete
+-a resource is a entity or object that exists within our application and is stored on the server
+-methods in a viewset that repond to requests are called actions. If you are making a custom action you need to decorate it with the action decorator in rest framework
+-dont do ad hoc permissions per user as it becomes hard to keep track. Always create and add permissions to groups and add users to groups
+-how we should write code: start simple get a foundation and gradually build things up step by step. Dont try to do too many things. 
+-how to write an improve code: Focus on a single task, build the happy path, then improve it, refactor your code then add data validation and so on.
+-get method expects exactly one record in the database, if we get 0 or more than 1 records we will get an exception
+-important principal in programming: command query seperation - which means our methods or functions should either be commands and change the state of the system or they should be queries meaning they should only return data (only answer questions, they should not change the state or data in the system). 
+-use transactions for multiple updates in the database in case server goes offline in middle of operation. either all the code in the block should be exectuted or all the saved changes should be rolled back. (atomic like an atom)
+-signals are used to decouple our apps and prevent them from stepping on each others toes. They are like a notification when an event occurs that can be used to hook onto and then do something
+-in django our models have a bunch of signals or notifications that are fired at different times. ie: pre_save, post_save, pre_delete, post_delete (of models) so in our app we can listen to these notifications and do something
+-signals are basically event emitters: we can listen for events and once an event is fired or emitted do something in our application
+-the final step in creating and handling signals is to load the module containing the signal handler when the app is ready. This is done in app.py in the CoreConfig class by overwriting the ready method
+
+
+
+request_header: JWT eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNjgzNDA1NDAyLCJpYXQiOjE2ODMzMTkwMDIsImp0aSI6IjBhNjc3MDkwNzc2ZTRiZjVhMjNmNTBiOTVhOThmMzY5IiwidXNlcl9pZCI6Mn0.wA3jJUcMl1Fn94geS_RlK1cYvsRNDlIt987fyYWNT_0
+
+john.smith
+pooper45
+=========================================================================================================================================================================================================================================
+aggregating objects exercise:
+
+from itertools import product
+from math import prod
+from django.shortcuts import render
+from django.db.models import Q, F
+from django.db.models.aggregates import Count, Max, Min, Avg, Sum
+from django.http import HttpResponse
+from store.models import Collection, Customer, Order, OrderItem, Product
+
+
+def say_hello(request):
+
+    # queryset = Order.objects.select_related(
+    #    'customer').prefetch_related('orderitem_set__product').order_by('-placed_at')[:5]
+    # select products that have been ordered and sort them by title
+    # products = OrderItem.objects.order_by(
+    #    'product__title').values('product_id', 'product__title').distinct()
+
+    # result = Product.objects.filter(collection__id=1).aggregate(
+    #    count=Count('id'), min_price=Min('unit_price'))
+
+    # How many orders do we have?
+
+    # result = Order.objects.aggregate(count=Count('id'))
+
+    # How many units of product 1 have we sold?
+
+    # result = OrderItem.objects.filter(
+    #    product__id=1).aggregate(units_sold=Sum('quantity'))
+
+    # How many orders has customer 1 placed?
+    # result = Order.objects.filter(customer__id=1).aggregate(count=Count('id'))
+
+    # What is the min, max and average price of the products in collection 3?
+    result = Product.objects.filter(collection__id=3).aggregate(min_price=Min(
+        'unit_price'), avg_price=Avg('unit_price'), max_price=Max('unit_price'))
+
+    return render(request, 'hello.html', {'name': 'Mosh', 'result': result})
+
+=========================================================================================================================================================================================================================================
+
+from itertools import product
+from django.db.models import DecimalField
+from django.shortcuts import render
+from django.db.models import Q, F, Value, Func, Count, ExpressionWrapper, Max, Sum
+from django.db.models.functions import Concat
+from django.http import HttpResponse
+from store.models import Collection, Customer, Order, OrderItem, Product
+
+
+def say_hello(request):
+    discounted_price = ExpressionWrapper(
+        F('unit_price') * 0.8, output_field=DecimalField())
+
+    """    queryset = Customer.objects.annotate(
+            # CONCAT
+            full_name=Func(F('first_name'), Value(
+                ' '), F('last_name'), function='CONCAT')
+        )
+
+        queryset = Customer.objects.annotate(
+            # CONCAT
+            full_name=Concat('first_name', Value(' '), 'last_name')
+        )
+    """
+
+    # queryset = Customer.objects.annotate(
+    #    orders_count=Count('order')
+    # )
+
+    # queryset = Product.objects.annotate(
+    #    discounted_price=discounted_price)
+
+    # Customers with their last order ID
+
+    # queryset = Customer.objects.annotate(last_order_id=Max('order__id'))
+
+    # Collections and the count of their products
+    # queryset = Collection.objects.annotate(count=Count('product'))
+
+    # customers with more than 5 orders
+    queryset = Customer.objects.annotate(
+        orders_count=Count('order')).filter(orders_count__gt=5)
+
+    # Customers and the total amount they’ve spent
+    queryset = Customer.objects.annotate(total_spent=Sum(
+        F('order__orderitem__unit_price') *
+        F('order__orderitem__quantity')
+    ))
+
+    # Top 5 best selling products and their total sales
+    queryset = Product.objects.annotate(
+        total_sales=Sum(
+            F('orderitem__unit_price') *
+            F('orderitem__quantity'))).order_by('-total_sales')[:5]
+
+    return render(request, 'hello.html', {'name': 'Mosh', 'result': list(queryset)})
+
+
+===========================================================================================================================================================================================================================
+
+
+from django.shortcuts import render
+from django.contrib.contenttypes.models import ContentType
+from store.models import Product
+from tags.models import TaggedItem
+
+
+def say_hello(request):
+    queryset = TaggedItem.objects.get_tags_for(Product, 1)
+
+    return render(request, 'hello.html', {'name': 'Mosh', 'tags': list(queryset)})
+
+
+===============================================================================================================================================================================================================================================
+
+
+from django.shortcuts import render
+from django.contrib.contenttypes.models import ContentType
+from store.models import Product
+from tags.models import TaggedItem
+
+
+def say_hello(request):
+    queryset = Product.objects.all()
+    queryset[0]
+    list(queryset)
+
+    return render(request, 'hello.html', {'name': 'Mosh'})
+
+===========================================================================================================================================================================================================================
+
+
+from django.shortcuts import render
+from django.contrib.contenttypes.models import ContentType
+
+from store.models import Collection, Product
+
+
+def say_hello(request):
+    """collection = Collection.objects.get(pk=11)
+    collection.featured_product = None
+    collection.save()"""
+
+    Collection.objects.filter(pk=11).update(featured_product=None)
+
+    return render(request, 'hello.html', {'name': 'Mosh'})
+
+===========================================================================================================================================================================================================================
+
+
+from django.shortcuts import render
+from django.contrib.contenttypes.models import ContentType
+
+from store.models import Collection, Product, Cart, CartItem
+
+
+def say_hello(request):
+    collection = Collection(pk=11)
+    collection.delete()
+
+    Collection.objects.filter(id__gt=5).delete()
+
+    # Create a shopping cart with an item
+    cart = Cart()
+    cart.save()
+
+    item1 = CartItem()
+    item1.cart = cart
+    item1.product_id = 1
+    item1.quantity = 1
+    item1.save()
+
+    # Update the quantity of an item in a shopping cart
+    item1 = CartItem.objects.get(pk=1)
+    item1.quantity = 2
+    item1.save()
+
+    # Remove a shopping cart with its items
+    cart = Cart(pk=1)
+    cart.delete()
+
+    return render(request, 'hello.html', {'name': 'Mosh'})
+
+
+==========================================================================================================================================================================================================================
+
+from django.shortcuts import render
+from django.contrib.contenttypes.models import ContentType
+from django.db import transaction
+from store.models import Collection, OrderItem, Product, Cart, CartItem, Order
+
+
+def say_hello(request):
+
+    # ...
+
+    with transaction.atomic():
+
+        order = Order()
+        order.customer_id = 1
+        order.save()
+
+        item = OrderItem()
+        item.order = order
+        item.product_id = -1
+        item.quantity = 1
+        item.unit_price = 10
+        item.save()
+
+    return render(request, 'hello.html', {'name': 'Mosh'})
+
+
+==========================================================================================================================================================================================================================
+
+from django.shortcuts import render
+from django.contrib.contenttypes.models import ContentType
+from django.db import transaction
+from store.models import Collection, OrderItem, Product, Cart, CartItem, Order
+
+
+def say_hello(request):
+
+    # ...
+
+    with transaction.atomic():
+
+        order = Order()
+        order.customer_id = 1
+        order.save()
+
+        item = OrderItem()
+        item.order = order
+        item.product_id = -1
+        item.quantity = 1
+        item.unit_price = 10
+        item.save()
+
+    return render(request, 'hello.html', {'name': 'Mosh'})
+
+===========================================================================================================================================================================================================================
+
+from django.shortcuts import render
+from django.contrib.contenttypes.models import ContentType
+from django.db import connection
+from store.models import Collection, OrderItem, Product, Cart, CartItem, Order
+
+
+def say_hello(request):
+    # queryset = Product.objects.raw('SELECT id, title FROM store_product')\
+
+    with connection.cursor() as cursor:
+        cursor.execute()
+
+    return render(request, 'hello.html', {'name': 'Mosh', 'result': list(queryset)})
+
+===============================================================================================================================================================================================================================
+
+
+from django.urls import reverse
+from django.contrib import admin
+from django.db.models import Count
+from django.utils.html import format_html, urlencode
+from . import models
+
+
+@admin.register(models.Product)
+class ProductAdmin(admin.ModelAdmin):
+    list_display = ['title', 'unit_price',
+                    'inventory_status', 'collection_title']
+    list_editable = ['unit_price']
+    list_per_page: 10
+    list_select_related = ['collection']
+
+    def collection_title(self, product):
+        return product.collection.title
+
+    @admin.display(ordering='inventory')
+    def inventory_status(self, product):
+        if product.inventory < 10:
+            return 'Low'
+        return 'OK'
+
+
+@admin.register(models.Customer)
+class CustomerAdmin(admin.ModelAdmin):
+    ordering = ['first_name', 'last_name']
+    list_display = ['first_name', 'last_name', 'membership']
+    list_editable = ['membership']
+    list_per_page: 10
+
+@admin.register(models.Order)
+class OrderAdmin(admin.ModelAdmin):
+    ordering = ['placed_at']
+    list_display = ['id', 'placed_at', 'customer']
+
+    def customer_first_name(self, order):
+        return order.customer.first_name
+
+
+@admin.register(models.Collection)
+class CollectionAdmin(admin.ModelAdmin):
+    list_display = ['title', 'products_count']
+
+    @admin.display(ordering='products_count')
+    def products_count(self, collection):
+        url = (
+            reverse('admin:store_product_changelist')
+            + '?'
+            + urlencode({
+                'collection__id': str(collection.id)
+            }))
+        return format_html('<a href="{}">{}</a>', url,
+                           collection.products_count)
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).annotate(
+            products_count=Count('product')
+        )
+
+
+=========================================================================================================================================================================================================================================
+serializers.py
+
+from rest_framework import serializers
+from decimal import Decimal
+
+from store.models import Product, Collection, Review
+
+
+class CollectionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Collection
+        fields = ['id', 'title', 'products_count']
+    
+    products_count = serializers.IntegerField(read_only=True)
+    
+
+    def calculate_products(self, collection: Collection):
+        return sum(collection)
+
+class ProductSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Product
+        fields = ['id', 'title', 'description', 'slug', 'inventory', 'unit_price', 'price_with_tax', 'collection']
+    price_with_tax = serializers.SerializerMethodField(
+        method_name='calculate_tax')
+    
+
+    def calculate_tax(self, product: Product):
+        return product.unit_price * Decimal(1.1)
+    
+
+class ReviewSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Review
+        fields = ['id', 'date', 'name', 'description']
+
+    def create(self, validated_data):
+        product_id = self.context['product_id']
+        return Review.objects.create(product_id=product_id, **validated_data)
+
+=====================================================================================================================================================================================================================================
+views.py
+
+from django.db.models import Count
+from django.shortcuts import get_object_or_404
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.response import Response
+from rest_framework import status
+from rest_framework.filters import SearchFilter, OrderingFilter
+from rest_framework.viewsets import ModelViewSet
+from .models import Collection, Product, OrderItem, Review
+from .filters import ProductFilter
+from .serializers import CollectionSerializer, ProductSerializer, ReviewSerializer
+from .pagination import DefaultPagination
+
+# Create your views here.
+
+class ProductViewSet(ModelViewSet):
+    queryset = Product.objects.all()
+    serializer_class = ProductSerializer
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_class = ProductFilter
+    pagination_class = DefaultPagination
+    search_fields = ['title', 'description']
+    ordering_fields = ['unit_price', 'last_update']
+
+    def get_serializer_context(self):
+        return {'request': self.request}
+
+    def destroy(self, request, *args, **kwargs):
+        if OrderItem.objects.filter(product_id=kwargs['pk']).count() > 0:
+            return Response({'error': 'product cannot be deleted as its associated with an order item'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+        
+        return super().destroy(request, *args, **kwargs)    
+
+    
+class CollectionViewSet(ModelViewSet):
+
+    queryset = Collection.objects.annotate(products_count=Count('products')).all()
+    serializer_class = CollectionSerializer
+
+    def delete(self, request, pk):
+        collection = get_object_or_404(Collection, pk=pk)
+        if collection.orderitems.count() > 0:
+            return Response({'error': 'product cannot be deleted as its associated with an order item'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+        collection.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class ReviewViewSet(ModelViewSet):
+    serializer_class = ReviewSerializer
+
+    def get_queryset(self):
+        return Review.objects.filter(product_id=self.kwargs['product_pk'])
+    
+    def get_serializer_context(self):
+        pass
+
+class CartViewSet(ModelViewSet):
+    pass
+
+======================================================================================================================================================================================================================================
+models.py
+
+from django.core.validators import MinValueValidator
+from django.db import models
+from uuid import uuid4
+
+
+class Promotion(models.Model):
+    description = models.CharField(max_length=255)
+    discount = models.FloatField()
+
+
+class Collection(models.Model):
+    title = models.CharField(max_length=255)
+    featured_product = models.ForeignKey(
+        'Product', on_delete=models.SET_NULL, null=True, related_name='+', blank=True)
+
+    def __str__(self) -> str:
+        return self.title
+
+    class Meta:
+        ordering = ['title']
+
+
+class Product(models.Model):
+    title = models.CharField(max_length=255)
+    slug = models.SlugField()
+    description = models.TextField(null=True, blank=True)
+    unit_price = models.DecimalField(
+        max_digits=6,
+        decimal_places=2,
+        validators=[MinValueValidator(1)])
+    inventory = models.IntegerField(validators=[MinValueValidator(0)])
+    last_update = models.DateTimeField(auto_now=True)
+    collection = models.ForeignKey(
+        Collection, on_delete=models.PROTECT, related_name='products')
+    promotions = models.ManyToManyField(Promotion, blank=True)
+
+    def __str__(self) -> str:
+        return self.title
+
+    class Meta:
+        ordering = ['title']
+
+
+class Customer(models.Model):
+    MEMBERSHIP_BRONZE = 'B'
+    MEMBERSHIP_SILVER = 'S'
+    MEMBERSHIP_GOLD = 'G'
+
+    MEMBERSHIP_CHOICES = [
+        (MEMBERSHIP_BRONZE, 'Bronze'),
+        (MEMBERSHIP_SILVER, 'Silver'),
+        (MEMBERSHIP_GOLD, 'Gold'),
+    ]
+    first_name = models.CharField(max_length=255)
+    last_name = models.CharField(max_length=255)
+    email = models.EmailField(unique=True)
+    phone = models.CharField(max_length=255)
+    birth_date = models.DateField(null=True, blank=True)
+    membership = models.CharField(
+        max_length=1, choices=MEMBERSHIP_CHOICES, default=MEMBERSHIP_BRONZE)
+
+    def __str__(self):
+        return f'{self.first_name} {self.last_name}'
+
+    class Meta:
+        ordering = ['first_name', 'last_name']
+
+
+class Order(models.Model):
+    PAYMENT_STATUS_PENDING = 'P'
+    PAYMENT_STATUS_COMPLETE = 'C'
+    PAYMENT_STATUS_FAILED = 'F'
+    PAYMENT_STATUS_CHOICES = [
+        (PAYMENT_STATUS_PENDING, 'Pending'),
+        (PAYMENT_STATUS_COMPLETE, 'Complete'),
+        (PAYMENT_STATUS_FAILED, 'Failed')
+    ]
+
+    placed_at = models.DateTimeField(auto_now_add=True)
+    payment_status = models.CharField(
+        max_length=1, choices=PAYMENT_STATUS_CHOICES, default=PAYMENT_STATUS_PENDING)
+    customer = models.ForeignKey(Customer, on_delete=models.PROTECT)
+
+
+class OrderItem(models.Model):
+    order = models.ForeignKey(Order, on_delete=models.PROTECT)
+    product = models.ForeignKey(
+        Product, on_delete=models.PROTECT, related_name='orderitems')
+    quantity = models.PositiveSmallIntegerField()
+    unit_price = models.DecimalField(max_digits=6, decimal_places=2)
+
+
+class Address(models.Model):
+    street = models.CharField(max_length=255)
+    city = models.CharField(max_length=255)
+    customer = models.ForeignKey(
+        Customer, on_delete=models.CASCADE)
+
+
+class Cart(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid4)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+
+class CartItem(models.Model):
+    cart = models.ForeignKey(
+        Cart, on_delete=models.CASCADE, related_name='items')
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    quantity = models.PositiveSmallIntegerField()
+
+    class Meta:
+        unique_together = [['cart', 'product']]
+
+
+class Review(models.Model):
+    product = models.ForeignKey(
+        Product, on_delete=models.CASCADE, related_name='reviews')
+    name = models.CharField(max_length=255)
+    description = models.TextField()
+    date = models.DateField(auto_now_add=True)
+
+
+======================================================================================================================================================================================================================================
+urls.py
+
+from django.urls import path
+from rest_framework_nested import routers
+from . import views
+
+
+router = routers.DefaultRouter()
+router.register('products', views.ProductViewSet, basename='products')
+router.register('collections', views.CollectionViewSet)
+
+products_router = routers.NestedDefaultRouter(router, 'products', lookup='product')
+products_router.register('reviews', views.ReviewViewSet, basename='product-reviews')
+
+# URLConf
+urlpatterns = router.urls + products_router.urls
+
+======================================================================================================================================================================================================================================
+settings.py
+
+"""
+Django settings for storefront project.
+
+Generated by 'django-admin startproject' using Django 3.2.3.
+
+For more information on this file, see
+https://docs.djangoproject.com/en/3.2/topics/settings/
+
+For the full list of settings and their values, see
+https://docs.djangoproject.com/en/3.2/ref/settings/
+"""
+
+from pathlib import Path
+
+# Build paths inside the project like this: BASE_DIR / 'subdir'.
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+
+# Quick-start development settings - unsuitable for production
+# See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
+
+# SECURITY WARNING: keep the secret key used in production secret!
+SECRET_KEY = 'django-insecure-hs6j037urx6iav+7#10%-vu4l4f5@@-1_zo)oft4g7$vf2$jmp'
+
+# SECURITY WARNING: don't run with debug turned on in production!
+DEBUG = True
+
+ALLOWED_HOSTS = []
+
+
+# Application definition
+
+INSTALLED_APPS = [
+    'django.contrib.admin',
+    'django.contrib.sessions',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+    'django_filters',
+    'rest_framework',
+    'playground',
+    'debug_toolbar',
+    'store',
+    'store_custom',
+    'tags',
+    'likes'
+]
+
+MIDDLEWARE = [
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
+    'django.middleware.security.SecurityMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.common.CommonMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+]
+
+INTERNAL_IPS = [
+    # ...
+    '127.0.0.1',
+    # ...
+]
+
+ROOT_URLCONF = 'storefront.urls'
+
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [],
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': [
+                'django.template.context_processors.debug',
+                'django.template.context_processors.request',
+                'django.contrib.auth.context_processors.auth',
+                'django.contrib.messages.context_processors.messages',
+            ],
+        },
+    },
+]
+
+WSGI_APPLICATION = 'storefront.wsgi.application'
+
+
+# Database
+# https://docs.djangoproject.com/en/3.2/ref/settings/#databases
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'storefront2',
+        'HOST': 'localhost',
+        'USER': 'root',
+        'PASSWORD': 'Sydney45!'
+    }
+}
+
+
+# Password validation
+# https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
+
+AUTH_PASSWORD_VALIDATORS = [
+    {
+        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+    },
+]
+
+
+# Internationalization
+# https://docs.djangoproject.com/en/3.2/topics/i18n/
+
+LANGUAGE_CODE = 'en-us'
+
+TIME_ZONE = 'UTC'
+
+USE_I18N = True
+
+USE_L10N = True
+
+USE_TZ = True
+
+
+# Static files (CSS, JavaScript, Images)
+# https://docs.djangoproject.com/en/3.2/howto/static-files/
+
+STATIC_URL = '/static/'
+
+# Default primary key field type
+# https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
+
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+REST_FRAMEWORK = {
+    'COERCE_DECIMAL_TO_STRING': False
+}
+
+
+
+======================================================================================================================================================================================================================================
+
+======================================================================================================================================================================================================================================
+
+======================================================================================================================================================================================================================================
+
+======================================================================================================================================================================================================================================
+
+======================================================================================================================================================================================================================================
+
+======================================================================================================================================================================================================================================
