@@ -88,13 +88,21 @@ primary key does not allow duplicate values and enforces unique values so custom
 -manytomany relatioship queries: we use filter and the field name followed by __ (double underscore) and the field in the related table we want to access ie:  products = Product.objects.filter(tags__name) - here tags is the manytomany field in the Product table then by using double underscore we jump to the tags table and access the name field
 -manytomany relationships have an intermediatory table (which stores the id reference of both tables in the relationship), while manytoone relationships dont. Use models.ForeignKey for manytoone and models.ManyToManyField for manytomany
 **
+-whenever you see **kwargs as a parameter it means a variable number of keyword arguments can be passed into the function 
+-we can use signals when we have multiple bits of code interested in the same event - it is comprised of senders and receivers. Senders send out a signal with information when an event occurs in our app, a receiver can subscribe to that event and perform some action with the information when it occurs. ie: model signals. We can use decorators or stand alone functions to implement this - usually within a file called signals.py
+-when posting files or images via forms we need to set the enctype on forms to multipart/form-data ie: enctype="multipart/form-data"
+-we use _set when we want to go from the parent model to the child model so _set is tacked to the end of the child model (remember underline for shorter so child) ie: orders = request.user.customer.order_set.all() - here we are in the parent model at customer then we go into the child model order with order_set - because the Forign key is defined in the Order model order here is the child and customer is the parent because its the model being referenced as the FK. If we want to go the other way (child -> parent) then we can just just reference the field directly ie: order.customer
+-a decorator is a function that takes in another function in as a parameter and lets us add additional functionality before the original function is called
+-in the Meta class for model forms and django filters we need a minimum of two attributes
+-in html the name attribute of an input element is used to identify the form data when the form is submitted to the server. When the user clicks the submit button, the form data is sent to the server as key / value pairs where the name attribute is the key and the value attribute is the value - note value is not the value inside the input when the form is submitted but instead a specific value to be sent with the name field so there is key value pairs
+-the model that defines the foriegn key is considered the child model and the model which the forign key points to is considered the parent
 -in django model queries the double underscore notation allows you to jump into the related table to use those fields ie: ballOrders = firstCustomer.order_set.filter(product__name="Ball").count() - here first customer is a customer object we access the reverse relationship from orders - then apply the filter method on the orders table filtering by product then jump into the Product table with the double underscore (field is related to this table by foriegn key) and then access the name field.
 -when doing models.ForeignKey, the one is the class you pass inside parethesis (parent) and the many is the class its defined in ie: customer = models.ForeignKey(Customer, null=True, on_delete=models.SET_NULL) in the Orders class. Here the Customer class is the parent and is one and Orders is many
 -blank=True determins if a field is allowed to be left empty in a form
 -If you have a circular relationship, then pass the class name within quotes, but be careful if you rename the class because the string will not be updated.
 -If you pass a '+' as the related_name kw arg that tells django not to create that reverse relationship. So here in the Collection class: featured_product = models.ForeignKey('Product', on_delete=models.SET_NULL, null=True, 
 related_name='+') this will not create the reverse relationship in the Product class with field name 'collection_set' or 'collection' as there is sometimes confusion about the naming of the related name in django
-
+-a mixin is just a function which encapsulates a generic functionality and can be reused over different classes and objects
 -a db relationship has two ends: A parent and a child, the parent should exist before we can store the child
 
 -we use ORMs to query and manipulate data from a db. Tt saves us time instead of writing raw sql queries by hand
@@ -102,8 +110,8 @@ related_name='+') this will not create the reverse relationship in the Product c
 -ORMs dont perform well when dealing with complex queries
 -the best code is no code - don't over engineer
 -premature optimisation is the root of all evils
-
-
+-we can store static files on amazon S3 buckets
+-Inline formsets in django are like multiple forms in one
 -Product.objects - the objects attribute in a model class returns a manager object which we can use an interface to the db. The manager has a bunch of methods for querying or update data like all(), get() etc
 -most of the methods within the manager object return a queryset, not a list of of products like the above example.
 -a queryset is an object that encapsulates a query. At some point django evalutes the query_set and sends the right sql statements to the db. This happens when we interate over a qs, access an individual element with square brackets
