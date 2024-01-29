@@ -1,0 +1,22 @@
+prep: make sure you running a virtual env not global or dependencies wont load. note that static files and db needs to be hosted elsewhere
+
+1. pip freeze > requirements.txt
+2. add vercel.json code below.
+3. add '.vercel.app' to allowed host list
+4. add app = application to the bottom of wsgi file
+
+vercel.json code: (replace 'djangoprojectname' with the name of your project, the folder where your settings.py file lives)
+
+{
+    "builds": [{
+        "src": "djangoprojectname/wsgi.py",
+        "use": "@vercel/python",
+        "config": { "maxLambdaSize": "15mb", "runtime": "python3.9" }
+    }],
+    "routes": [
+        {
+            "src": "/(.*)",
+            "dest": "djangoprojectname/wsgi.py"
+        }
+    ]
+}
