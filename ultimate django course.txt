@@ -87,7 +87,22 @@ primary key does not allow duplicate values and enforces unique values so custom
 -parameters are for defining functions while arguments are for calling functions
 -manytomany relatioship queries: we use filter and the field name followed by __ (double underscore) and the field in the related table we want to access ie:  products = Product.objects.filter(tags__name) - here tags is the manytomany field in the Product table then by using double underscore we jump to the tags table and access the name field
 -manytomany relationships have an intermediatory table (which stores the id reference of both tables in the relationship), while manytoone relationships dont. Use models.ForeignKey for manytoone and models.ManyToManyField for manytomany
+
+-the best example to think of when doing foreign keys ie: one to many and parent and child is customers and orders ie: one customer (parent) can have many orders (child) - the parent part is always the one because 1 parent can have many children
+-when you have a parent object, you can query the related set downwards to find all the child related objects by doing: class ParentModel(models.Model): name = models.CharField(max_length=200, null=True) class ChildModel(models.Model): parent = models.ForeignKey(ParentModel) name = models.CharField(max_length=200, null=True) parent = ParentModel.objects.first() parent.childmodel_set.all() - not the '_set' appended to the end of the child models name in lowercase - if you dont like this name 'order_set' you can optionally add a 'related_name' parameter to the end of the foreignkey field then use this value when querying the reverse relationship
 **
+-when we are dealing with class instances we use _set when we want to go top down ie: parent to child but to go bottom up (child to parent) we dont need to use _set we can just use dot notation to access the related field directly ie: order = Order.objects.first() customer = order.customer.name print(customer) - here order is child model and customer is parent
+-related_name parameters can be defined for both onetomany and manytomany relationships to access the reverse relationship
+-_set will only work for model instances and not querysets
+- _set will only work for onetomany relationships ie: foreignkeys, not manytomany to access the reverse relationship for the later you would need to use a related name parameter
+-the double underscore notation allows you to traverse between related tables but also use it as an operator to filter data, you can also chain them together ie: orders = Order.objects.filter(product__tags__name='Electronics') products = Product.objects.filter(date_created__gt=datetime(2023, 1, 1))
+-you can filter by the related field in the parent model when the relationship is only defined in the child model and not the parent by just citing the child model name in lower case ie: customers = Customer.objects.filter(order__status='Out for delivery') - here Customer model does not have a field named order because the relationship is defined in the child model Order not the parent which is customer here but yet we can use 'order' in our query to access the relationship
+-you can also access the reverse relationship if you have a queryset instead of a single object, you just need to use the __in notation ie: customers = Customer.objects.all() all_orders = Order.objects.filter(customer__in=customers)
+-the double underscore notation is most commonly used with .filter() method ie: orders = Order.objects.filter(product__tags__name='Electronics') it allows you to traverse relationships and filter the query based on the fields of related models
+-with the .filter() method we can chain various queries ie: products = Product.objects.filter(category="Out Door", price__gt=50) - here we are querying the product table by two attributes category and price and then using the __ notation (double underscore) to filter by an operator in this case 'greater than' or 'gt'
+-we can use the order_by() method to sort our data ie: products = Product.objects.all().order_by('-id') - here the products are sorted by id in decsending order
+-a queryset is a similar to a python dictionary
+-a queryset is lazy evaluated which means it does not perform the actual db call until the data is actually needed so when you write a statement like customers = Customer.objects.all() - this does not immediately make a db query only when you iterate or access an item in queryset does it actually make the db call
 -whenever you see **kwargs as a parameter it means a variable number of keyword arguments can be passed into the function 
 -we can use signals when we have multiple bits of code interested in the same event - it is comprised of senders and receivers. Senders send out a signal with information when an event occurs in our app, a receiver can subscribe to that event and perform some action with the information when it occurs. ie: model signals. We can use decorators or stand alone functions to implement this - usually within a file called signals.py
 -when posting files or images via forms we need to set the enctype on forms to multipart/form-data ie: enctype="multipart/form-data"
@@ -105,6 +120,8 @@ related_name='+') this will not create the reverse relationship in the Product c
 -a mixin is just a function which encapsulates a generic functionality and can be reused over different classes and objects
 -a db relationship has two ends: A parent and a child, the parent should exist before we can store the child
 
+-authentication is about registering and logging in but authorization is about having permissions to view certain pages, ie: only admins should be able to view certain urls which customers should not be allowed to view and when they do they get redirected
+-when you see the augmented assignment operator ie: += it just means we are extending the variable to its left ie: urlpatterns +=
 -we use ORMs to query and manipulate data from a db. Tt saves us time instead of writing raw sql queries by hand
 -ORMs or Object Relational Mapper - like the name suggests maps records in a relational db to objects that we can use in our code to manipulate data.
 -ORMs dont perform well when dealing with complex queries
@@ -281,7 +298,7 @@ used when you do your pipenv install in the terminal
 -adding or removing mixins from your ViewSet class in views.py will determine the operations that your endpoints can perform so operations like get, post, delete etc
 -product_id field is generated dynamically at runtime, its not a field we can reference in our serializer, so we have to explicitly define this field
 -In the serializer we dont have access to url parameters. Instead we get this from the view and using a context object pass it to the serializer
-
+-a decorator is a function that takes in another function in as a parameter and returns a new function. It lets us add a little extra functionality before the original function is called.
 
 
 -middleware is a function that takes a request and passes that request to the next middleware or returns a response. When django receives a request it passes it to a view, during that time it runs that request through these middleware functions in order. Each function can take a request and add something to it, or it can return a response. If it returns a response, the next middleware function is not exec and the req/res cycle is terminated.
@@ -306,8 +323,8 @@ used when you do your pipenv install in the terminal
 -in django our models have a bunch of signals or notifications that are fired at different times. ie: pre_save, post_save, pre_delete, post_delete (of models) so in our app we can listen to these notifications and do something
 -signals are basically event emitters: we can listen for events and once an event is fired or emitted do something in our application
 -the final step in creating and handling signals is to load the module containing the signal handler when the app is ready. This is done in app.py in the CoreConfig class by overwriting the ready method
-
-
+-positional arguments are arguments that need to be passed to a function or method in the order they are defined in the functions parameter list
+-in python a functions signature consists of its name and parameter list ie: def add(a, b): return a + b - here the signature would be add(a, b) - in other programming languages where function are explicitly typed, the return type is considered part of its signature
 
 request_header: JWT eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNjgzNDA1NDAyLCJpYXQiOjE2ODMzMTkwMDIsImp0aSI6IjBhNjc3MDkwNzc2ZTRiZjVhMjNmNTBiOTVhOThmMzY5IiwidXNlcl9pZCI6Mn0.wA3jJUcMl1Fn94geS_RlK1cYvsRNDlIt987fyYWNT_0
 
@@ -1045,3 +1062,12 @@ REST_FRAMEWORK = {
 ======================================================================================================================================================================================================================================
 
 ======================================================================================================================================================================================================================================
+
+the quick brown fox jumped over the lazy dog
+the quick brown fox jumped over the lazy dog
+the quick brown fox jumped over the lazy dog
+
+
+the quick brown fox jumped over the lazy dog
+the quick brown fox jumped over the lazy dog
+the quick brown fox jumped over the lazy dog
